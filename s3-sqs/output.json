@@ -1,0 +1,87 @@
+{
+  "Items": [
+    {
+      "data": {
+        "M": {
+          "body": {
+            "S": {
+              "status": "ok",
+              "message": "Hello from Lambda! Target bucket is to-be-added-later",
+              "input": {
+                "Records": [
+                  {
+                    "messageId": "e0ce8728-0c60-4cab-a567-9591268f6c5f",
+                    "receiptHandle": "NzZkMGNlNTQtZjNmMC00ZmVkLTk3MTctMjZkZjM0ODFlM2IwIGFybjphd3M6c3FzOnVzLWVhc3QtMTowMDAwMDAwMDAwMDA6bXktczMtc3FzLXRyaWdnZXItcXVldWUgZTBjZTg3MjgtMGM2MC00Y2FiLWE1NjctOTU5MTI2OGY2YzVmIDE3NjAzMDI4MDIuNDE1MDA2Ng==",
+                    "body": "{\"Records\": [{\"eventVersion\": \"2.1\", \"eventSource\": \"aws:s3\", \"awsRegion\": \"us-east-1\", \"eventTime\": \"2025-10-12T20:59:59.125Z\", \"eventName\": \"ObjectCreated:Put\", \"userIdentity\": {\"principalId\": \"AIDAJDPLRKLG7UEXAMPLE\"}, \"requestParameters\": {\"sourceIPAddress\": \"127.0.0.1\"}, \"responseElements\": {\"x-amz-request-id\": \"0d33521a\", \"x-amz-id-2\": \"eftixk72aD6Ap51TnqcoF8eFidJG9Z/2\"}, \"s3\": {\"s3SchemaVersion\": \"1.0\", \"configurationId\": \"tf-s3-queue-20251012205600465200000002\", \"bucket\": {\"name\": \"my-s3-sqs-trigger-bucket\", \"ownerIdentity\": {\"principalId\": \"A3NL1KOZZKExample\"}, \"arn\": \"arn:aws:s3:::my-s3-sqs-trigger-bucket\"}, \"object\": {\"key\": \"test-prefix/test-object-1760302798.txt\", \"sequencer\": \"0055AED6DCD90281E5\", \"eTag\": \"fbbe0c75255e595c7869badf4010a6e0\", \"size\": 13}}}]}",
+                    "attributes": {
+                      "SenderId": "000000000000",
+                      "SentTimestamp": "1760302799133",
+                      "ApproximateReceiveCount": "1",
+                      "ApproximateFirstReceiveTimestamp": "1760302802415"
+                    },
+                    "messageAttributes": {},
+                    "md5OfBody": "f7d51727ed618884d75c575f6f8e7880",
+                    "eventSourceARN": "arn:aws:sqs:us-east-1:000000000000:my-s3-sqs-trigger-queue",
+                    "eventSource": "aws:sqs",
+                    "awsRegion": "us-east-1"
+                  }
+                ]
+              },
+              "context": "LambdaContext([aws_request_id=d472965f-5605-456e-a219-90c909bcccea,log_group_name=/aws/lambda/s3-sqs-message-consumer,log_stream_name=2025/10/12/[$LATEST]52b806bd662872058e77443167ce90ec,function_name=s3-sqs-message-consumer,memory_limit_in_mb=256,function_version=$LATEST,invoked_function_arn=arn:aws:lambda:us-east-1:000000000000:function:s3-sqs-message-consumer,client_context=None,identity=CognitoIdentity([cognito_identity_id=None,cognito_identity_pool_id=None]),tenant_id=None])",
+              "length": 1
+            }
+          },
+          "statusCode": {
+            "N": 200
+          }
+        }
+      },
+      "id": {
+        "S": "Invalid numeric literal at EOF at line 1, column 36 (while parsing '8fbbb291-4461-47a1-aa52-d8a0dc1e6b63')"
+      }
+    },
+    {
+      "data": {
+        "M": {
+          "body": {
+            "S": {
+              "status": "ok",
+              "message": "Hello from Lambda! Target bucket is to-be-added-later",
+              "input": {
+                "Records": [
+                  {
+                    "messageId": "e2443b56-09cf-451f-9df7-5ffdfee46b3f",
+                    "receiptHandle": "Yzc5Yzc3YjktZTAxNC00MmM5LWFmNmQtZmNiOWJmZmQyODJiIGFybjphd3M6c3FzOnVzLWVhc3QtMTowMDAwMDAwMDAwMDA6bXktczMtc3FzLXRyaWdnZXItcXVldWUgZTI0NDNiNTYtMDljZi00NTFmLTlkZjctNWZmZGZlZTQ2YjNmIDE3NjAzMDI1NjAuNDgxNjYwMQ==",
+                    "body": "{\"Service\": \"Amazon S3\", \"Event\": \"s3:TestEvent\", \"Time\": \"2025-10-12T20:56:00.475Z\", \"Bucket\": \"my-s3-sqs-trigger-bucket\", \"RequestId\": \"65741faf-7521-4a9d-849f-810a6caf23c3\", \"HostId\": \"eftixk72aD6Ap51TnqcoF8eFidJG9Z/2\"}",
+                    "attributes": {
+                      "SenderId": "000000000000",
+                      "SentTimestamp": "1760302560480",
+                      "ApproximateReceiveCount": "1",
+                      "ApproximateFirstReceiveTimestamp": "1760302560481"
+                    },
+                    "messageAttributes": {},
+                    "md5OfBody": "426d86ca17287966ee7cae9068bdea7c",
+                    "eventSourceARN": "arn:aws:sqs:us-east-1:000000000000:my-s3-sqs-trigger-queue",
+                    "eventSource": "aws:sqs",
+                    "awsRegion": "us-east-1"
+                  }
+                ]
+              },
+              "context": "LambdaContext([aws_request_id=f7f8bc09-9da9-4497-add3-5a80369e6b9e,log_group_name=/aws/lambda/s3-sqs-message-consumer,log_stream_name=2025/10/12/[$LATEST]52b806bd662872058e77443167ce90ec,function_name=s3-sqs-message-consumer,memory_limit_in_mb=256,function_version=$LATEST,invoked_function_arn=arn:aws:lambda:us-east-1:000000000000:function:s3-sqs-message-consumer,client_context=None,identity=CognitoIdentity([cognito_identity_id=None,cognito_identity_pool_id=None]),tenant_id=None])",
+              "length": 1
+            }
+          },
+          "statusCode": {
+            "N": 200
+          }
+        }
+      },
+      "id": {
+        "S": "Invalid literal at EOF at line 1, column 36 (while parsing 'f6a64e62-3b07-4bbd-9108-b4fec8201ae1')"
+      }
+    }
+  ],
+  "Count": 2,
+  "ScannedCount": 2,
+  "ConsumedCapacity": null
+}

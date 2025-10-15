@@ -1,0 +1,18 @@
+services:
+  localstack:
+    image: localstack/localstack:latest
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3,sqs,lambda,sts,dynamodb,iam
+    volumes:
+      - "./volume:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./init-scripts:/etc/localstack/init/ready.d"
+
+    networks:
+      - localstack-network
+
+networks:
+  localstack-network:
+    driver: bridge
