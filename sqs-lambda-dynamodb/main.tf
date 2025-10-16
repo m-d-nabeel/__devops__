@@ -3,7 +3,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws" # Official AWS provider
-      version = "6.0.0"     # 5.x is more compatible with LocalStack for DynamoDB
+      version = "6.0.0"         # 5.x is more compatible with LocalStack for DynamoDB
     }
   }
 }
@@ -19,12 +19,12 @@ provider "aws" {
   s3_use_path_style           = true
 
   endpoints {
-    iam      = var.iam_endpoint
-    s3       = var.s3_endpoint
-    sqs      = var.sqs_endpoint
-    lambda   = var.lambda_endpoint
-    sts      = var.sts_endpoint
-    dynamodb = var.dynamodb_endpoint
-    logs     = var.logs_endpoint
+    iam      = var.localstack_endpoint
+    s3       = var.localstack_endpoint
+    sqs      = var.localstack_endpoint
+    lambda   = var.localstack_endpoint
+    sts      = var.localstack_endpoint
+    dynamodb = var.localstack_endpoint
+    logs     = var.localstack_endpoint
   }
 }

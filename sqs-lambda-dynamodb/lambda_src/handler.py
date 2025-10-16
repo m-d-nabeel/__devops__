@@ -1,89 +1,68 @@
 import json
+import logging
 import os
-import uuid
-from datetime import datetime, timezone
-from typing import TypedDict
 
-import boto3
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
+class PermanentError(Exception): pass # Errors that should not be retried
+class TransientError(Exception): pass # Errors that may succeed if retried
 
-class SblServiceAccountRequest(TypedDict):
-    request_id: str
-    tenant_id: str
-    account_id: str
-    service_name: str
-    version: str
-    csp: str
-    deployment_group_status: str
-    service_enaablement_status: str
-    created_by: str
-    created_at: str
-    last_modified_at: str
-    last_modified_source_date: str
-    last_modified_source_by: str
+def _load_max_attempts(default: int = 2) -> int:
+    raw_value = os.getenv("MAX_ATTEMPTS") or os.getenv("MAX_RETRY_ATTEMPTS")
+    if raw_value is None:
+        return default
+    try:
+        return int(raw_value)
+    except ValueError:
+        return default
 
 
-def _iso_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+MAX_ATTEMPTS = _load_max_attempts()
 
+def process(body_dict):
+    """Simulate downstream behavior so LocalStack tests can exercise retry paths."""
+    simulate = body_dict.get("simulate", "success")
 
-def _build_item(payload: dict) -> SblServiceAccountRequest:
-    now_iso = _iso_now()
-    created_at = payload.get("created_at", now_iso)
-    last_modified_at = payload.get("last_modified_at", created_at)
-    last_modified_source_date = payload.get("last_modified_source_date", last_modified_at)
-    created_by = payload.get("created_by", "system")
+    if simulate == "success":
+        return
+    if simulate == "transient":
+        raise TransientError(body_dict.get("reason", "simulated transient failure"))
+    if simulate == "permanent":
+        raise PermanentError(body_dict.get("reason", "simulated permanent failure"))
+    if simulate == "unknown":
+        raise RuntimeError(body_dict.get("reason", "simulated unexpected error"))
 
-    return {
-        "request_id": payload.get("request_id", str(uuid.uuid4())),
-        "tenant_id": payload.get("tenant_id", str(uuid.uuid4())),
-        "account_id": payload.get("account_id", str(uuid.uuid4())),
-        "service_name": payload.get("service_name", "unknown-service"),
-        "version": payload.get("version", "v1"),
-        "csp": payload.get("csp", "aws"),
-        "deployment_group_status": payload.get("deployment_group_status", "requested"),
-        "service_enaablement_status": payload.get("service_enaablement_status", "requested"),
-        "created_by": created_by,
-        "created_at": created_at,
-        "last_modified_at": last_modified_at,
-        "last_modified_source_date": last_modified_source_date,
-        "last_modified_source_by": payload.get("last_modified_source_by", created_by),
-    }
-
-
-def _dynamodb_resource() -> boto3.resources.base.ServiceResource:
-    endpoint_url = os.environ.get("AWS_ENDPOINT_URL")
-    region_name = os.environ.get("AWS_REGION", "us-east-1")
-    if endpoint_url:
-        return boto3.resource(
-            "dynamodb", endpoint_url=endpoint_url, region_name=region_name
-        )
-    return boto3.resource("dynamodb", region_name=region_name)
-
+    return
 
 def lambda_handler(event, context):
-    table_name = os.environ["TABLE_NAME"]
-    dynamodb = _dynamodb_resource()
-    table = dynamodb.Table(table_name)
+    failures = []
+    for record in event['Records']:
+        msg_id = record['messageId']
+        receive_count = int(record['attributes']['ApproximateReceiveCount'])
+        try:
+            body = json.loads(record['body'])
+        except json.JSONDecodeError:
+            logger.warning("terminal_drop invalid_json messageId=%s count=%d", msg_id, receive_count)
+            continue
 
-    records = event.get("Records", [])
-    responses = []
+        try:
+            process(body)
+            logger.info("processed messageId=%s count=%d", msg_id, receive_count)
+        except PermanentError as e:
+            logger.warning("terminal_drop permanent messageId=%s count=%d reason=%s", msg_id, receive_count, e)
+        except TransientError as e:
+            if receive_count <= MAX_ATTEMPTS:
+                failures.append({"itemIdentifier": msg_id})
+                logger.info("retrying transient messageId=%s count=%d reason=%s max=%d", msg_id, receive_count, e, MAX_ATTEMPTS)
+            else:
+                logger.warning("terminal_drop transient_threshold_exceeded messageId=%s count=%d reason=%s",
+                               msg_id, receive_count, e)
+        except Exception as e:
+            if receive_count <= MAX_ATTEMPTS:
+                failures.append({"itemIdentifier": msg_id})
+                logger.exception("retrying unknown_error messageId=%s count=%d max=%d", msg_id, receive_count, MAX_ATTEMPTS)
+            else:
+                logger.exception("terminal_drop unknown_after_threshold messageId=%s count=%d", msg_id, receive_count)
 
-    for record in records:
-        payload = json.loads(record["body"])
-        item = _build_item(payload)
-        table.put_item(Item=item)
-        responses.append(
-            {
-                "request_id": item["request_id"],
-                "tenant_id": item["tenant_id"],
-                "account_id": item["account_id"],
-                "deployment_group_status": item["deployment_group_status"],
-                "service_enaablement_status": item["service_enaablement_status"],
-            }
-        )
-
-    return {
-        "statusCode": 200,
-        "body": json.dumps({"processed": len(responses), "items": responses}),
-    }
+    return {"batchItemFailures": failures}
