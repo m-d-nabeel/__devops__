@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """Push a transient failure message and display retry-related Lambda logs."""
 
@@ -9,13 +9,27 @@ import uuid
 import boto3
 
 AWS_REGION = "us-east-1"
-AWS_ENDPOINT = "http://localhost:4566"
+AWS_ENDPOINT = "http://localhost.localstack.cloud:4566"
+AWS_ACCESS_KEY = "test-access-key"
+AWS_SECRET_KEY = "test-secret-key"
 QUEUE_NAME = "sbl-service-request-queue"
 LOG_GROUP = "/aws/lambda/sbl-service-request-processor"
 WAIT_SECONDS = 12
 
-sqs = boto3.client("sqs", region_name=AWS_REGION, endpoint_url=AWS_ENDPOINT)
-logs = boto3.client("logs", region_name=AWS_REGION, endpoint_url=AWS_ENDPOINT)
+sqs = boto3.client(
+    "sqs",
+    region_name=AWS_REGION,
+    endpoint_url=AWS_ENDPOINT,
+    aws_access_key_id=AWS_ACCESS_KEY,
+    aws_secret_access_key=AWS_SECRET_KEY,
+)
+logs = boto3.client(
+    "logs",
+    region_name=AWS_REGION,
+    endpoint_url=AWS_ENDPOINT,
+    aws_access_key_id=AWS_ACCESS_KEY,
+    aws_secret_access_key=AWS_SECRET_KEY,
+)
 
 queue_url = sqs.get_queue_url(QueueName=QUEUE_NAME)["QueueUrl"]
 message_id = str(uuid.uuid4())

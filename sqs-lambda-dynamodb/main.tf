@@ -26,5 +26,6 @@ provider "aws" {
     sts      = var.localstack_endpoint
     dynamodb = var.localstack_endpoint
     logs     = var.localstack_endpoint
+    ec2      = var.localstack_endpoint
   }
 }

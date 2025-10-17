@@ -15,10 +15,8 @@ module "sbl_service_account_request_lambda" {
   }]
 
   environment_variables = {
-    SBL_SERVICE_ACCOUNT_REQUEST_TABLE = aws_dynamodb_table.sbl_service_acccount_request.name
-    SBL_SERVICE_REQUEST_QUEUE_TABLE   = aws_sqs_queue.sbl_service_request_queue.name
-    AWS_ENDPOINT_URL                  = var.localstack_endpoint
-    MAX_RETRY_ATTEMPTS                = 2
+    AWS_ENDPOINT_URL   = var.localstack_endpoint
+    MAX_RETRY_ATTEMPTS = 2
   }
 
   role_path                         = "/sbl-service-request-processor/"
@@ -51,19 +49,9 @@ module "sbl_service_account_request_lambda" {
 
       resources = [aws_sqs_queue.sbl_service_request_queue.arn]
     }
-
-    logs_access = {
-      effect = "Allow"
-
-      actions = [
-        "logs:CreateLogGroup",
-        "logs:CreateLogStream",
-        "logs:PutLogEvents",
-      ]
-
-      resources = ["*"]
-    }
   }
+
+  vpc_security_group_ids = [aws_security_group.sbl_service_request_lambda_sq.id]
 
   tags = {
     Environment = "production"
@@ -85,4 +73,22 @@ resource "aws_lambda_event_source_mapping" "sbl_service_request" {
   # # Note: maximum_retry_attempts is not applicable for SQS event sources in event source mapping.
   # # Retries for SQS are managed by the queue's redrive policy and Lambda's default behavior.
   # maximum_retry_attempts             = 2
+}
+
+resource "aws_security_group" "sbl_service_request_lambda_sq" {
+  name        = "sbl-service-request-lambda-sg"
+  description = "Allow traffic to SBL Service Request Lambda"
+  vpc_id      = aws_vpc.global_vpc.id
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Environment = "production"
+    Team        = "sbl"
+  }
 }

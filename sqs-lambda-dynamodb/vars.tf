@@ -21,3 +21,9 @@ variable "localstack_endpoint" {
   type        = string
   default     = "http://localhost.localstack.cloud:4566"
 }
+
+variable "vpc_cidr_block" {
+  description = "CIDR block for the VPC"
+  type        = string
+  default     = "10.15.28.0/22"
+}

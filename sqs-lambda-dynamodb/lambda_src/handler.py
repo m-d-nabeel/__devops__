@@ -1,15 +1,24 @@
 import json
 import logging
 import os
+import time
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-class PermanentError(Exception): pass # Errors that should not be retried
-class TransientError(Exception): pass # Errors that may succeed if retried
+
+# Errors that should not be retried
+class PermanentError(Exception):
+    pass
+
+
+# Errors that may succeed if retried
+class TransientError(Exception):
+    pass
+
 
 def _load_max_attempts(default: int = 2) -> int:
-    raw_value = os.getenv("MAX_ATTEMPTS") or os.getenv("MAX_RETRY_ATTEMPTS")
+    raw_value = os.getenv("MAX_RETRY_ATTEMPTS")
     if raw_value is None:
         return default
     try:
@@ -18,10 +27,12 @@ def _load_max_attempts(default: int = 2) -> int:
         return default
 
 
-MAX_ATTEMPTS = _load_max_attempts()
+MAX_RETRY_ATTEMPTS = _load_max_attempts()
+
 
 def process(body_dict):
-    """Simulate downstream behavior so LocalStack tests can exercise retry paths."""
+    """Simulate downstream behavior so tests can exercise retry paths."""
+    time.sleep(3)  # Simulate processing time testing
     simulate = body_dict.get("simulate", "success")
 
     if simulate == "success":
@@ -35,34 +46,63 @@ def process(body_dict):
 
     return
 
+
 def lambda_handler(event, context):
     failures = []
-    for record in event['Records']:
-        msg_id = record['messageId']
-        receive_count = int(record['attributes']['ApproximateReceiveCount'])
+    for record in event["Records"]:
+        msg_id = record["messageId"]
+        receive_count = int(record["attributes"]["ApproximateReceiveCount"])
         try:
-            body = json.loads(record['body'])
+            body = json.loads(record["body"])
         except json.JSONDecodeError:
-            logger.warning("terminal_drop invalid_json messageId=%s count=%d", msg_id, receive_count)
+            logger.warning(
+                "terminal_drop invalid_json messageId=%s count=%d",
+                msg_id,
+                receive_count,
+            )
             continue
 
         try:
             process(body)
             logger.info("processed messageId=%s count=%d", msg_id, receive_count)
         except PermanentError as e:
-            logger.warning("terminal_drop permanent messageId=%s count=%d reason=%s", msg_id, receive_count, e)
+            logger.warning(
+                "terminal_drop permanent messageId=%s count=%d reason=%s",
+                msg_id,
+                receive_count,
+                e,
+            )
         except TransientError as e:
-            if receive_count <= MAX_ATTEMPTS:
+            if receive_count <= MAX_RETRY_ATTEMPTS:
                 failures.append({"itemIdentifier": msg_id})
-                logger.info("retrying transient messageId=%s count=%d reason=%s max=%d", msg_id, receive_count, e, MAX_ATTEMPTS)
+                logger.info(
+                    "retrying transient messageId=%s count=%d reason=%s max=%d",
+                    msg_id,
+                    receive_count,
+                    e,
+                    MAX_RETRY_ATTEMPTS,
+                )
             else:
-                logger.warning("terminal_drop transient_threshold_exceeded messageId=%s count=%d reason=%s",
-                               msg_id, receive_count, e)
+                logger.warning(
+                    "terminal_drop transient_threshold_exceeded messageId=%s count=%d reason=%s",
+                    msg_id,
+                    receive_count,
+                    e,
+                )
         except Exception as e:
-            if receive_count <= MAX_ATTEMPTS:
+            if receive_count <= MAX_RETRY_ATTEMPTS:
                 failures.append({"itemIdentifier": msg_id})
-                logger.exception("retrying unknown_error messageId=%s count=%d max=%d", msg_id, receive_count, MAX_ATTEMPTS)
+                logger.exception(
+                    "retrying unknown_error messageId=%s count=%d max=%d",
+                    msg_id,
+                    receive_count,
+                    MAX_RETRY_ATTEMPTS,
+                )
             else:
-                logger.exception("terminal_drop unknown_after_threshold messageId=%s count=%d", msg_id, receive_count)
+                logger.exception(
+                    "terminal_drop unknown_after_threshold messageId=%s count=%d",
+                    msg_id,
+                    receive_count,
+                )
 
     return {"batchItemFailures": failures}
